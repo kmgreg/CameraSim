@@ -7,5 +7,7 @@ This was written in and designed around Visual Studio and Windows. Other Operati
 
 Requirements:
 Allegro 5
+
 GLUT or equivalent
+
 GLSL Support
