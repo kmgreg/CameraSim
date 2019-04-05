@@ -98,10 +98,12 @@ int main()
 	bool right = false;
 	bool up = false;
 	bool down = false;
+	bool sleft = false;
+	bool sright = false;
 	vector<float> pos;
 	pos.push_back(-4);
 	pos.push_back(1);
-	pos.push_back(10);
+	pos.push_back(-10);
 	while (1) {
 		ALLEGRO_EVENT ev;
 		al_wait_for_event(event_queue, &ev);
@@ -131,6 +133,12 @@ int main()
 				case ALLEGRO_KEY_DOWN:
 					down = true;
 					break;
+				case ALLEGRO_KEY_A:
+					sleft = true;
+					break;
+				case ALLEGRO_KEY_D:
+					sright = true;
+					break;
 			}
 		}
 		else if (ev.type == ALLEGRO_EVENT_KEY_UP) {
@@ -146,6 +154,12 @@ int main()
 				break;
 			case ALLEGRO_KEY_DOWN:
 				down = false;
+				break;
+			case ALLEGRO_KEY_A:
+				sleft = false;
+				break;
+			case ALLEGRO_KEY_D:
+				sright = false;
 				break;
 			}
 		}
@@ -203,7 +217,9 @@ int main()
 				vector<float> xandz = getLA(deg);
 				lax = xandz[1];
 				laz = xandz[0];
-
+				vector<float> strafe = getLA((float)((int) (deg - 90.0) % 360));
+				float sx = strafe[0];
+				float sz = strafe[1];
 				if (up) {
 					pos[0] += lax * velocity;
 					pos[2] += laz * velocity;
@@ -212,9 +228,17 @@ int main()
 					pos[0] -= lax * velocity;
 					pos[2] -= laz * velocity;
 				}
+				if (sleft){
+					pos[0] -= sz * velocity;
+					pos[2] -= sx * velocity;
+				}
+				if (sright) {
+					pos[0] += sz * velocity;
+					pos[2] += sx * velocity;
+				}
 				gluLookAt(pos[0], pos[1], pos[2], pos[0] + lax, pos[1], pos[2] + laz, 0, 1, 0);
 				glPushMatrix();
-				glTranslatef(20, 0, 0);
+				glTranslatef(-15, 0, -10);
 				glRotatef(90, 1, 0, 0);
 				glColor3f(1, 0, 0);
 				glBegin(GL_POLYGON);
