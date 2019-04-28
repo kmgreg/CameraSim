@@ -1,5 +1,6 @@
 #include <allegro5/allegro5.h>
 #include <allegro5/allegro_opengl.h>
+#include <allegro5/allegro_image.h>
 #include <GL/freeglut.h>
 #include <GL/GLU.h>
 #include <cstdio>
@@ -13,6 +14,61 @@ const float velocity = 0.1;
 
 using namespace std;
 
+//This function from nehe.gamedev.net
+
+GLvoid glDrawCube(GLuint txtr)                 // Draw A Cube
+{
+	glColor3f(1, 1, 1);
+	glEnable(GL_TEXTURE_2D);
+	if (txtr != 0)
+		glBindTexture(GL_TEXTURE_2D, txtr);
+
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+	glBegin(GL_QUADS);
+
+	// Front Face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, 1.0f);  // Bottom Left Of The Texture and Quad
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, -1.0f, 1.0f);  // Bottom Right Of The Texture and Quad
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, 1.0f);  // Top Right Of The Texture and Quad
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, 1.0f);  // Top Left Of The Texture and Quad
+		
+															 // Back Face
+
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);  // Bottom Right Of The Texture and Quad
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, 1.0f, -1.0f);  // Top Right Of The Texture and Quad
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(1.0f, 1.0f, -1.0f);  // Top Left Of The Texture and Quad
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(1.0f, -1.0f, -1.0f);  // Bottom Left Of The Texture and Quad
+	
+															   
+	// Top Face
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, -1.0f);  // Top Left Of The Texture and Quad
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, 1.0f, 1.0f);  // Bottom Left Of The Texture and Quad
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, 1.0f, 1.0f);  // Bottom Right Of The Texture and Quad
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, -1.0f);  // Top Right Of The Texture and Quad
+															  // Bottom Face
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, -1.0f, -1.0f);  // Top Right Of The Texture and Quad
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(1.0f, -1.0f, -1.0f);  // Top Left Of The Texture and Quad
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(1.0f, -1.0f, 1.0f);  // Bottom Left Of The Texture and Quad
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, 1.0f);  // Bottom Right Of The Texture and Quad
+															   // Right face
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(1.0f, -1.0f, -1.0f);  // Bottom Right Of The Texture and Quad
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(1.0f, 1.0f, -1.0f);  // Top Right Of The Texture and Quad
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(1.0f, 1.0f, 1.0f);  // Top Left Of The Texture and Quad
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(1.0f, -1.0f, 1.0f);  // Bottom Left Of The Texture and Quad
+															  // Left Face
+	glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);  // Bottom Left Of The Texture and Quad
+	glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, 1.0f);  // Bottom Right Of The Texture and Quad
+	glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, 1.0f, 1.0f);  // Top Right Of The Texture and Quad
+	glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, -1.0f);  // Top Left Of The Texture and Quad
+	
+	glEnd();                    // Done Drawing Quads
+
+	glDisable(GL_TEXTURE_2D);
+}
+
 vector<float> getLA(float deg) {
 	deg = deg * PI/ 180;
 	vector<float> lavals;
@@ -20,7 +76,7 @@ vector<float> getLA(float deg) {
 	float z = sinf(deg);
 	lavals.push_back(x);
 	lavals.push_back(z);
-	return  lavals;
+	return lavals;
 }
 
 
@@ -77,6 +133,12 @@ int main()
 
 	al_start_timer(timer);
 
+	al_init_image_addon();
+	ALLEGRO_BITMAP * bmp = al_load_bitmap("../testtexture.png");
+	GLuint txtr = al_get_opengl_texture(bmp);
+	glEnable(GL_CULL_FACE);
+
+
 	glViewport(0, 0, 640, 480);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -87,7 +149,7 @@ int main()
 	glClear(GL_COLOR_BUFFER_BIT);
 	glColor3f(1, 0, 0);
 	double n = 0.0;
-	bool d1 = false;
+	int d1 = 0;
 	float camx;
 	float camy;
 	float camz;
@@ -116,7 +178,7 @@ int main()
 		}
 
 		else if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
-			d1 = !d1;
+			d1 = (d1 + 1) % 3;
 		}
 
 		else if (ev.type == ALLEGRO_EVENT_KEY_DOWN) {
@@ -165,7 +227,7 @@ int main()
 		}
 
 		if (redraw && al_is_event_queue_empty(event_queue)) {
-			if (!d1) {
+			if (d1 == 0) {
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 				redraw = false;
 				glMatrixMode(GL_PROJECTION);
@@ -173,12 +235,12 @@ int main()
 				n += 0.1;
 				if (n > 10.0)
 					n = 0.0;
-				gluPerspective(90 - n * 5, 1.333, 0, 6 - n);
+				gluPerspective(90 - n * 6, 1.333, 0, 6 - n);
 				glMatrixMode(GL_MODELVIEW);
 				glLoadIdentity();
 				gluLookAt(-4, 1, 10 + n, 0, 0, 0, 0, 1, 0);
 				glPushMatrix();
-				glTranslatef(20, 0, 0);
+				glTranslatef(6, 0, 0);
 				glRotated(90, 1, 0, 0);
 				glColor3f(1, 0, 0);
 				glBegin(GL_POLYGON);
@@ -187,17 +249,17 @@ int main()
 				glEnd();
 				glPopMatrix();
 				glPushMatrix();
-				glTranslatef(0, 0, 5);
+				glTranslatef(4, 0, 6);
 				glRotated(-90, 1, 0, 0);
 				glColor3f(0, 0, 1);
 				glBegin(GL_POLYGON);
 				GLUquadricObj * s = gluNewQuadric();
-				gluCylinder(q, 5, 0, 1, 30, 30);
+				gluCylinder(s, 5, 0, 1, 30, 30);
 				glEnd();
 				glPopMatrix();
 				al_flip_display();
 			}
-			else {
+			else if (d1 == 1) {
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 				redraw = false;
 				glMatrixMode(GL_PROJECTION);
@@ -214,12 +276,14 @@ int main()
 					deg -= 1;
 				if (deg > 360)
 					deg = 0;
+				if (deg < 0)
+					deg = 360;
 				vector<float> xandz = getLA(deg);
 				lax = xandz[1];
 				laz = xandz[0];
 				vector<float> strafe = getLA((float)((int) (deg - 90.0) % 360));
-				float sx = strafe[0];
-				float sz = strafe[1];
+				float sx = strafe[1];
+				float sz = strafe[0];
 				if (up) {
 					pos[0] += lax * velocity;
 					pos[2] += laz * velocity;
@@ -229,16 +293,16 @@ int main()
 					pos[2] -= laz * velocity;
 				}
 				if (sleft){
-					pos[0] -= sz * velocity;
-					pos[2] -= sx * velocity;
+					pos[0] -= sx * velocity;
+					pos[2] -= sz * velocity;
 				}
 				if (sright) {
-					pos[0] += sz * velocity;
-					pos[2] += sx * velocity;
+					pos[0] += sx * velocity;
+					pos[2] += sz * velocity;
 				}
 				gluLookAt(pos[0], pos[1], pos[2], pos[0] + lax, pos[1], pos[2] + laz, 0, 1, 0);
 				glPushMatrix();
-				glTranslatef(-15, 0, -10);
+				glTranslatef(-15, 0, 10);
 				glRotatef(90, 1, 0, 0);
 				glColor3f(1, 0, 0);
 				glBegin(GL_POLYGON);
@@ -246,6 +310,50 @@ int main()
 				gluCylinder(q, 5, 5, 1, 30, 30);
 				glEnd();
 				glPopMatrix();
+				glDrawCube(txtr);
+
+				al_flip_display();
+			}
+			else if (d1 == 2) {
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				redraw = false;
+				glMatrixMode(GL_PROJECTION);
+				glLoadIdentity();
+				gluPerspective(75, 1.333, 0, 9);
+				glMatrixMode(GL_MODELVIEW);
+				glLoadIdentity();
+				if (left)
+					deg += 1;
+				if (right)
+					deg -= 1;
+				if (deg > 360)
+					deg = 0;
+				if (deg < 0)
+					deg = 360;
+				vector<float> xandz = getLA(deg);
+				lax = xandz[1];
+				laz = xandz[0];
+				gluLookAt(-15 + (lax * 20), 5, 10 + (laz * 20), -15, 0, 10, 0, 1, 0);
+				glPushMatrix();
+				glTranslatef(-15, 0, 10);
+				glRotatef(90, 1, 0, 0);
+				glColor3f(1, 0, 0);
+				glBegin(GL_POLYGON);
+				GLUquadricObj * q = gluNewQuadric();
+				gluCylinder(q, 5, 5, 1, 30, 30);
+				glEnd();
+				glPopMatrix();
+
+				glPushMatrix();
+				glTranslatef(12, 0, 5);
+				glRotatef(90, 1, 0, 0);
+				glColor3f(0, 0, 1);
+				glBegin(GL_POLYGON);
+				GLUquadricObj * z = gluNewQuadric();
+				gluCylinder(z, 5, 5, 1, 30, 30);
+				glEnd();
+				glPopMatrix();
+
 				al_flip_display();
 			}
 		}
