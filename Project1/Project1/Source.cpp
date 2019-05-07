@@ -14,19 +14,45 @@ const float velocity = 0.1;
 
 using namespace std;
 
-//This function from nehe.gamedev.net
+float dist(vector<float> a, vector<float> b) {
+	float ft = pow(a.at(0) - b.at(0), 2);
+	float tt = pow(a.at(2) - b.at(2),2);
+	return sqrt(ft + tt);
+}
 
-GLvoid glDrawCube(GLuint txtr)                 // Draw A Cube
+float followdist(float fov, float objwid) {
+	return objwid / (2 * tan(.5 * fov));
+}
+
+//For our purposes, just return a basic range of values
+float rescale(float dist, float flen) {
+	float diff = abs(flen - dist);
+	if (diff < .1)
+		return 1;
+	else
+		return min(1.3, 1 + diff);
+}
+
+
+//This function from nehe.gamedev.net
+GLvoid glDrawCube(GLuint txtr, ALLEGRO_BITMAP * bmp)                 // Draw A Cube
 {
-	glColor3f(1, 1, 1);
 	glEnable(GL_TEXTURE_2D);
+	glColor3f(1, 1, 1);
 	if (txtr != 0)
 		glBindTexture(GL_TEXTURE_2D, txtr);
-
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-
+	/*
+	ALLEGRO_SHADER * ctextsdr = al_create_shader(ALLEGRO_SHADER_GLSL);
+	al_attach_shader_source_file(ctextsdr
+	, ALLEGRO_PIXEL_SHADER, "../shader.frag");
+	al_build_shader(ctextsdr);
+	al_use_shader(ctextsdr);
+	al_set_shader_sampler("txtr", bmp, 1);
+	al_set_shader_bool("horizontal", true);
+	*/
+	
 	glBegin(GL_QUADS);
 
 	// Front Face
@@ -65,8 +91,10 @@ GLvoid glDrawCube(GLuint txtr)                 // Draw A Cube
 	glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f, 1.0f, -1.0f);  // Top Left Of The Texture and Quad
 	
 	glEnd();                    // Done Drawing Quads
-
+	
 	glDisable(GL_TEXTURE_2D);
+	
+
 }
 
 vector<float> getLA(float deg) {
@@ -85,13 +113,12 @@ int main()
 	ALLEGRO_EVENT_QUEUE *event_queue = NULL;
 	ALLEGRO_TIMER *timer = NULL;
 	bool redraw = true;
-
+	ALLEGRO_SHADER * shader;
 	ALLEGRO_DISPLAY * display;
 	if (!al_init()) {
 		fprintf(stderr, "failed to initialize allegro!\n");
 		return -1;
 	}
-
 	al_set_new_display_flags(ALLEGRO_OPENGL);
 	display = al_create_display(640, 480);
 	if (!display) {
@@ -162,10 +189,29 @@ int main()
 	bool down = false;
 	bool sleft = false;
 	bool sright = false;
+	bool fup = false;
+	bool fdown = false;
 	vector<float> pos;
 	pos.push_back(-4);
 	pos.push_back(1);
 	pos.push_back(-10);
+	float fov = 90;
+	float ow = 2;
+	float flen = 5;
+
+	//Cylinder in "focus" demo
+	vector<float> shapepos;
+	shapepos.push_back(-15);
+	shapepos.push_back(0);
+	shapepos.push_back(10);
+
+	//Same but for cube.
+	vector<float> cubepos;
+	cubepos.push_back(0);
+	cubepos.push_back(0);
+	cubepos.push_back(0);
+
+
 	while (1) {
 		ALLEGRO_EVENT ev;
 		al_wait_for_event(event_queue, &ev);
@@ -201,6 +247,12 @@ int main()
 				case ALLEGRO_KEY_D:
 					sright = true;
 					break;
+				case ALLEGRO_KEY_W:
+					fup = true;
+					break;
+				case ALLEGRO_KEY_S:
+					fdown = true;
+					break;
 			}
 		}
 		else if (ev.type == ALLEGRO_EVENT_KEY_UP) {
@@ -223,6 +275,12 @@ int main()
 			case ALLEGRO_KEY_D:
 				sright = false;
 				break;
+			case ALLEGRO_KEY_W:
+				fup = false;
+				break;
+			case ALLEGRO_KEY_S:
+				fdown = false;
+				break;
 			}
 		}
 
@@ -232,15 +290,17 @@ int main()
 				redraw = false;
 				glMatrixMode(GL_PROJECTION);
 				glLoadIdentity();
-				n += 0.1;
+				n += 0.05;
 				if (n > 10.0)
 					n = 0.0;
-				gluPerspective(90 - n * 6, 1.333, 0, 6 - n);
+				float newf = fov - n;
+				float fd = followdist(newf, ow);
+				gluPerspective(130 - n * 6, 1.333, 0, 6 + (n * 100));
 				glMatrixMode(GL_MODELVIEW);
 				glLoadIdentity();
-				gluLookAt(-4, 1, 10 + n, 0, 0, 0, 0, 1, 0);
+				gluLookAt(-4, 1, 10 + n, 0, 0, 1, 0, 1, 0);
 				glPushMatrix();
-				glTranslatef(6, 0, 0);
+				glTranslatef(5, 0, 0);
 				glRotated(90, 1, 0, 0);
 				glColor3f(1, 0, 0);
 				glBegin(GL_POLYGON);
@@ -249,12 +309,12 @@ int main()
 				glEnd();
 				glPopMatrix();
 				glPushMatrix();
-				glTranslatef(4, 0, 6);
+				glTranslatef(5, 0, 6);
 				glRotated(-90, 1, 0, 0);
 				glColor3f(0, 0, 1);
 				glBegin(GL_POLYGON);
 				GLUquadricObj * s = gluNewQuadric();
-				gluCylinder(s, 5, 0, 1, 30, 30);
+				gluCylinder(s, 2, 0, 1, 100, 100);
 				glEnd();
 				glPopMatrix();
 				al_flip_display();
@@ -300,17 +360,31 @@ int main()
 					pos[0] += sx * velocity;
 					pos[2] += sz * velocity;
 				}
+				if (fup)
+					flen += 0.05;
+				if (fdown)
+					flen -= 0.05;
+				if (flen < 0)
+					flen = 0;
+				if (flen > 100)
+					flen = 100;
 				gluLookAt(pos[0], pos[1], pos[2], pos[0] + lax, pos[1], pos[2] + laz, 0, 1, 0);
 				glPushMatrix();
-				glTranslatef(-15, 0, 10);
+				glTranslatef(shapepos.at(0), shapepos.at(1), shapepos.at(2));
+				float lentoc = dist(shapepos,pos);
+				float scale = rescale(lentoc, flen);
 				glRotatef(90, 1, 0, 0);
+				glScalef(scale,scale,scale);
 				glColor3f(1, 0, 0);
 				glBegin(GL_POLYGON);
 				GLUquadricObj * q = gluNewQuadric();
 				gluCylinder(q, 5, 5, 1, 30, 30);
 				glEnd();
 				glPopMatrix();
-				glDrawCube(txtr);
+				float lentosq = dist(cubepos, pos);
+				float cscale = rescale(lentosq, flen);
+				glScalef(cscale, cscale, cscale);
+				glDrawCube(txtr, bmp);
 
 				al_flip_display();
 			}
